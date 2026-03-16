@@ -10,7 +10,8 @@ struct timespec ts_outtime[2]; // outtime
 
 
 // SET LOAD
-int load[2] = {15, 34};
+int load[2] = {70, 10};
+int sleep_time[2] = {1, 2};
 
 void calculate_time(struct timespec outtime, struct timespec intime) {
     long sec = outtime.tv_sec - intime.tv_sec;
@@ -27,31 +28,28 @@ void calculate_time(struct timespec outtime, struct timespec intime) {
     printf("Time taken: %ld.%ld s\n", sec, ms);
 }
 
-// Not used for multithreading
-void generic_load(int load) {
-    int multiplyer = 1000;
-
-    for ( int i =0; i < load *multiplyer; i ++) {
-        usleep(100);
-        if (i == load*multiplyer - 1) printf("Process with load %d finished!\n", load);
+void task(int id) {
+    int a =0;
+    for (int i = 0; i < 10000000; i++) {
+        a++;
     }
+    printf("task_finished %d\n", id);
 }
 
 // Multithreading "generic work" with response time corresponding to load[id]
 void * generic_load_barrier(void * ids) {
-    int multiplyer = 1000;
-
+          
     int id = *(int *) ids;
-
     pthread_barrier_wait(&barrier);
-
-    for ( int i =0; i < load[id] *multiplyer; i ++) {
-        usleep(100);
-        if (i == load[id]*multiplyer - 1) printf("Process with load %d finished!\n", load[id]);
+   
+    for (int i = 0; i < 9999; i++) {
+        task(id);
+        sleep(sleep_time[id]);
     }
-    clock_gettime(0, &ts_outtime[id]);
-}
 
+    clock_gettime(0, &ts_outtime[id]);
+    printf("Process with load %d finished!\n", load[id]);
+}
 
 // Main function
 void real_time_task() {
@@ -60,6 +58,7 @@ void real_time_task() {
     pthread_barrier_init(&barrier, NULL, 2);
     pthread_t t[2];
     int id[2];
+    
 
     clock_gettime(0, &ts_intime);
     for(int i=0; i<2; i++)
