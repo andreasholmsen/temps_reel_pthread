@@ -4,83 +4,53 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+// Nb threads, ids, loads and delays for the threads
+#define NBTHREADS 2
+int ids[NBTHREADS] = {0,1};
+int loads[NBTHREADS] = {1, 1};
+int delays[NBTHREADS] = {1,2};
+
+// Pthread
 pthread_barrier_t barrier;
-struct timespec ts_intime;
-struct timespec ts_outtime[2]; // outtime
+pthread_t tid[NBTHREADS];
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
+void * thread(void * arg) {
+    int id = *((int *) arg);
 
-// SET LOAD
-int load[2] = {70, 10};
-int sleep_time[2] = {1, 2};
+    pthread_barrier_wait(&barrier); // Start synchronously
 
-void calculate_time(struct timespec outtime, struct timespec intime) {
-    long sec = outtime.tv_sec - intime.tv_sec;
-    long nsec = outtime.tv_nsec - intime.tv_nsec;
+    while (1) {
 
-    // normalise if nsec negative
-    if (nsec < 0) {
-        sec -= 1;
-        nsec += 1000000000L;
+        pthread_mutex_lock(&mutex); // "Lock processor"
+
+        printf("Starting task %d (load: %d | delay %d)", id, loads[id], delays[id]);
+        for (int i = 0; i < 5; i++) {
+            usleep(100000*loads[id]);
+            printf(" . ");
+            fflush(stdout); // Output immediately
+        }
+        printf("Done\n");
+        pthread_mutex_unlock(&mutex);
+        
+        sleep(delays[id]);
     }
-
-    long ms = nsec / 1000000L;
-
-    printf("Time taken: %ld.%ld s\n", sec, ms);
 }
 
-void task(int id) {
-    int a =0;
-    for (int i = 0; i < 10000000; i++) {
-        a++;
-    }
-    printf("task_finished %d\n", id);
-}
 
-// Multithreading "generic work" with response time corresponding to load[id]
-void * generic_load_barrier(void * ids) {
-          
-    int id = *(int *) ids;
-    pthread_barrier_wait(&barrier);
-   
-    for (int i = 0; i < 9999; i++) {
-        task(id);
-        sleep(sleep_time[id]);
-    }
 
-    clock_gettime(0, &ts_outtime[id]);
-    printf("Process with load %d finished!\n", load[id]);
-}
-
-// Main function
-void real_time_task() {
-
-    // Init barrier
+int main(void) {
     pthread_barrier_init(&barrier, NULL, 2);
-    pthread_t t[2];
-    int id[2];
-    
 
-    clock_gettime(0, &ts_intime);
-    for(int i=0; i<2; i++)
-      {
-         id[i] = i;
-         if(pthread_create(&t[i], NULL, generic_load_barrier, (void *) &id[i]))
-            printf("Unable to create thread %d!\n", i);
-      }
 
-    pthread_join(t[0], NULL);
-    pthread_join(t[1], NULL);
+    for (int i = 0; i < NBTHREADS; i++) {
+        if(pthread_create(&tid[i], NULL, thread, (void *) &ids[i]))
+            printf("Thread creation fail %d!\n", i);
+        }
 
-    // Calculate times taken
-    for (int i = 0; i < 2; i++) {
-        calculate_time(ts_outtime[i], ts_intime);
+    for (int i = 0; i < NBTHREADS; i++) {
+        pthread_join(tid[i], NULL);
     }
 
-}
-
-int main (void) {
-
-    real_time_task();
-
-
+    return 0;
 }
