@@ -40,7 +40,7 @@ void * thread(void * arg) {
 
 
 int main(void) {
-    pthread_barrier_init(&barrier, NULL, 2);
+    pthread_barrier_init(&barrier, NULL, NBTHREADS);
 
 
     for (int i = 0; i < NBTHREADS; i++) {
