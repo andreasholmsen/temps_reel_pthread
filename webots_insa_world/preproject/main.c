@@ -7,32 +7,40 @@
 // Nb threads, ids, loads and delays for the threads
 #define NBTHREADS 2
 int ids[NBTHREADS] = {0,1};
-int loads[NBTHREADS] = {1, 1};
+int loads[NBTHREADS] = {2, 2};
 int delays[NBTHREADS] = {1,2};
 
 // Pthread
 pthread_barrier_t barrier;
 pthread_t tid[NBTHREADS];
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Time measuring
+struct timespec start, end;
+
+
+//Thread, simulates load and calculates response time
 void * thread(void * arg) {
     int id = *((int *) arg);
-
     pthread_barrier_wait(&barrier); // Start synchronously
 
     while (1) {
 
-        pthread_mutex_lock(&mutex); // "Lock processor"
+        clock_gettime(CLOCK_MONOTONIC, &start);
 
-        printf("Starting task %d (load: %d | delay %d)", id, loads[id], delays[id]);
+        //printf("Starting task %d (load: %d | delay %d)", id, loads[id], delays[id]);
         for (int i = 0; i < 5; i++) {
-            usleep(100000*loads[id]);
-            printf(" . ");
+            //printf(" . ");
             fflush(stdout); // Output immediately
+            for (int j = 0; j < 100000000*loads[id]; j++) {
+                // Load 
+            } 
         }
-        printf("Done\n");
-        pthread_mutex_unlock(&mutex);
         
+        clock_gettime(CLOCK_MONOTONIC, &end);
+
+        long response_time = (end.tv_sec - start.tv_sec) * 1000000L + (end.tv_nsec - start.tv_nsec) / 1000L;
+        printf("%d Done (response time: %ld ms)\n", id,  response_time /1000L);
+
         sleep(delays[id]);
     }
 }
@@ -42,12 +50,13 @@ void * thread(void * arg) {
 int main(void) {
     pthread_barrier_init(&barrier, NULL, NBTHREADS);
 
-
+    // Create threads
     for (int i = 0; i < NBTHREADS; i++) {
         if(pthread_create(&tid[i], NULL, thread, (void *) &ids[i]))
             printf("Thread creation fail %d!\n", i);
         }
 
+    // Wait for thread completion
     for (int i = 0; i < NBTHREADS; i++) {
         pthread_join(tid[i], NULL);
     }
