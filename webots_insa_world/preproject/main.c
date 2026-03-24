@@ -7,7 +7,7 @@
 // Nb threads, ids, loads and delays for the threads
 #define NBTHREADS 2
 int ids[NBTHREADS] = {0,1};
-int loads[NBTHREADS] = {2, 2};
+int loads[NBTHREADS] = {4, 4};
 int delays[NBTHREADS] = {1,2};
 
 // Pthread

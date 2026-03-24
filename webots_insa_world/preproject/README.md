@@ -2,62 +2,43 @@
 # Preproject
 
                 gcc main.c -o main -O0 -pthread && ./main 
-                0 Done (response time: 1374 ms)
-                1 Done (response time: 1399 ms)
-                0 Done (response time: 219 ms)
-                1 Done (response time: 15 ms)
-                0 Done (response time: 1205 ms)
-                1 Done (response time: 1211 ms)
-                0 Done (response time: 1410 ms)
-                0 Done (response time: 485 ms)
-                1 Done (response time: 1309 ms)
-                0 Done (response time: 1173 ms)
-                1 Done (response time: 1067 ms)
-                0 Done (response time: 1425 ms)
-                0 Done (response time: 659 ms)
-                1 Done (response time: 1312 ms)
-                0 Done (response time: 1183 ms)
-                1 Done (response time: 765 ms)
-                0 Done (response time: 1272 ms)
-                0 Done (response time: 940 ms)
-                1 Done (response time: 1413 ms)
-                0 Done (response time: 1187 ms)
-                ^Cmake: *** [Makefile:2: run] Interrupt
+                1 Done (response time: 2878 ms)
+                0 Done (response time: 2885 ms)
+                0 Done (response time: 1724 ms)
+                1 Done (response time: 2704 ms)
+                0 Done (response time: 605 ms)
+                1 Done (response time: 1169 ms)
+                0 Done (response time: 2638 ms)
+                1 Done (response time: 2369 ms)
+                0 Done (response time: 2826 ms)
+                0 Done (response time: 2126 ms)
+                1 Done (response time: 2677 ms)
 
                 gcc main.c -o main -O0 -pthread && taskset -c 0 ./main 
-                1 Done (response time: 2478 ms)
-                0 Done (response time: 2479 ms)
-                0 Done (response time: 355 ms)
-                1 Done (response time: 28 ms)
-                0 Done (response time: 1216 ms)
-                1 Done (response time: 2000 ms)
-                0 Done (response time: 2163 ms)
-                0 Done (response time: 612 ms)
-                1 Done (response time: 1456 ms)
-                0 Done (response time: 1173 ms)
-                1 Done (response time: 1709 ms)
-                0 Done (response time: 2042 ms)
-                0 Done (response time: 997 ms)
-                1 Done (response time: 1670 ms)
-                0 Done (response time: 1190 ms)
-                1 Done (response time: 1334 ms)
-                0 Done (response time: 1861 ms)
-                0 Done (response time: 1477 ms)
-                1 Done (response time: 1952 ms)
-                0 Done (response time: 1203 ms)
-                1 Done (response time: 956 ms)
-                0 Done (response time: 1680 ms)
-                0 Done (response time: 1843 ms)
-                1 Done (response time: 2116 ms)
-                ^Cmake: *** [Makefile:5: run_single] Interrupt
+                1 Done (response time: 4878 ms)
+                0 Done (response time: 4891 ms)
+                0 Done (response time: 2928 ms)
+                1 Done (response time: 3876 ms)
+                0 Done (response time: 931 ms)
+                1 Done (response time: 1941 ms)
+                0 Done (response time: 3417 ms)
+                1 Done (response time: 4051 ms)
+                0 Done (response time: 4502 ms)
+                0 Done (response time: 3724 ms)
+                1 Done (response time: 4304 ms)
+                0 Done (response time: 1647 ms)
+                1 Done (response time: 1206 ms)
+                0 Done (response time: 3020 ms)
+                1 Done (response time: 3181 ms)
+                0 Done (response time: 3970 ms)
 
 **Remarks**:
 
-Longer reponse times when limiting to one processor, notabily some processes taking over 2100 ms. **Max response times**: `1425ms` and `2163ms`.
+Longer reponse times when limiting to one processor, notabily some processes taking over 4000 ms. **Max response times**: `2826ms` and `4502ms`.
 
 Parameters used:
 
 ``` C
-int loads[NBTHREADS] = {2, 2};
+int loads[NBTHREADS] = {4, 4};
 int delays[NBTHREADS] = {1,2};
 ```
