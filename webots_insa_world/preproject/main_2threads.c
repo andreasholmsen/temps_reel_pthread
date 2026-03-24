@@ -5,18 +5,17 @@
 #include <stdlib.h>
 
 // Nb threads, ids, loads and delays for the threads
-#define NBTHREADS 3
-int ids[NBTHREADS] = {0,1, 2};
-int loads[NBTHREADS] = {4, 4, 4};
-int delays[NBTHREADS] = {1,2, 2};
-int sched_pri_vals[NBTHREADS] = {10,1, 5};
+#define NBTHREADS 2
+int ids[NBTHREADS] = {0,1};
+int loads[NBTHREADS] = {4, 4};
+int delays[NBTHREADS] = {1,2};
+int sched_pri_vals[NBTHREADS] = {1,1};
 
 // Pthread
 pthread_barrier_t barrier;
 pthread_t tid[NBTHREADS];
 struct sched_param sched_params[NBTHREADS];
 #define SCHED_TYPE SCHED_RR
-pthread_mutex_t mutex= PTHREAD_MUTEX_INITIALIZER ;
 
 // Time measuring
 struct timespec start, end;
@@ -31,8 +30,6 @@ void * thread(void * arg) {
 
         clock_gettime(CLOCK_MONOTONIC, &start);
 
-        if (id < 2) {pthread_mutex_lock(&mutex);} // Mutex for high and low priority task
-
         //printf("Starting task %d (load: %d | delay %d)", id, loads[id], delays[id]);
         for (int i = 0; i < 5; i++) {
             //printf(" . ");
@@ -40,11 +37,9 @@ void * thread(void * arg) {
             for (int j = 0; j < 100000000*loads[id]; j++) {
                 // Load 
             } 
-        }ø
+        }
         
         clock_gettime(CLOCK_MONOTONIC, &end);
-
-        if (id < 2) {pthread_mutex_unlock(&mutex);}
 
         long response_time = (end.tv_sec - start.tv_sec) * 1000000L + (end.tv_nsec - start.tv_nsec) / 1000L;
         printf("%d Done (response time: %ld ms)\n", id,  response_time /1000L);
