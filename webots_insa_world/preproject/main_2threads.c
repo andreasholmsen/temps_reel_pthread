@@ -9,7 +9,7 @@
 int ids[NBTHREADS] = {0,1};
 int loads[NBTHREADS] = {4, 4};
 int delays[NBTHREADS] = {1,2};
-int sched_pri_vals[NBTHREADS] = {1,1};
+int sched_pri_vals[NBTHREADS] = {1,10};
 
 // Pthread
 pthread_barrier_t barrier;
@@ -42,8 +42,9 @@ void * thread(void * arg) {
         clock_gettime(CLOCK_MONOTONIC, &end);
 
         long response_time = (end.tv_sec - start.tv_sec) * 1000000L + (end.tv_nsec - start.tv_nsec) / 1000L;
-        printf("%d Done (response time: %ld ms)\n", id,  response_time /1000L);
-         fflush(stdout); // Output immediately
+        //printf("%d Done (response time: %ld ms)\n", id,  response_time /1000L);
+        printf("%d %ld\n", id,  response_time /1000L);
+        fflush(stdout); // Output immediately
 
         sleep(delays[id]);
 
@@ -61,12 +62,12 @@ int main(void) {
             printf("Thread creation fail %d!\n", i);
         }
 
+        
     // Set schedule priorities
     for (int i = 0; i < NBTHREADS; i++) {
         sched_params[i].sched_priority = sched_pri_vals[i];
         pthread_setschedparam(tid[i], SCHED_TYPE, &sched_params[i]);
-    }
-
+    } 
 
     // Wait for thread completion
     for (int i = 0; i < NBTHREADS; i++) {

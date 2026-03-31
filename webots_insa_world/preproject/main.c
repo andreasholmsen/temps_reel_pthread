@@ -8,15 +8,15 @@
 #define NBTHREADS 3
 int ids[NBTHREADS] = {0,1, 2};
 int loads[NBTHREADS] = {4, 4, 4};
-int delays[NBTHREADS] = {1,2, 2};
-int sched_pri_vals[NBTHREADS] = {10,1, 5};
+int delays[NBTHREADS] = {2,2, 1};
+int sched_pri_vals[NBTHREADS] = {1,10, 5};
 
 // Pthread
 pthread_barrier_t barrier;
 pthread_t tid[NBTHREADS];
 struct sched_param sched_params[NBTHREADS];
 #define SCHED_TYPE SCHED_RR
-pthread_mutex_t mutex= PTHREAD_MUTEX_INITIALIZER ;
+pthread_mutex_t mutex;
 
 // Time measuring
 struct timespec start, end;
@@ -30,7 +30,9 @@ void * thread(void * arg) {
     while (1) {
 
         clock_gettime(CLOCK_MONOTONIC, &start);
+        if (id ==2) {for(int i = 0; i < 1e6; i++) {
 
+        }}
         if (id < 2) {pthread_mutex_lock(&mutex);} // Mutex for high and low priority task
 
         //printf("Starting task %d (load: %d | delay %d)", id, loads[id], delays[id]);
@@ -40,15 +42,16 @@ void * thread(void * arg) {
             for (int j = 0; j < 100000000*loads[id]; j++) {
                 // Load 
             } 
-        }ø
+        }
         
         clock_gettime(CLOCK_MONOTONIC, &end);
 
         if (id < 2) {pthread_mutex_unlock(&mutex);}
 
         long response_time = (end.tv_sec - start.tv_sec) * 1000000L + (end.tv_nsec - start.tv_nsec) / 1000L;
-        printf("%d Done (response time: %ld ms)\n", id,  response_time /1000L);
-         fflush(stdout); // Output immediately
+        //printf("%d Done (response time: %ld ms)\n", id,  response_time /1000L);
+        printf("%d %ld\n", id,  response_time /1000L);
+        fflush(stdout); // Output immediately
 
         sleep(delays[id]);
 
@@ -59,6 +62,12 @@ void * thread(void * arg) {
 
 int main(void) {
     pthread_barrier_init(&barrier, NULL, NBTHREADS);
+
+    // Setup Mutex
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_setprotocol(&attr, PTHREAD_PRIO_INHERIT);
+    pthread_mutex_init(&mutex, &attr);
 
     // Create threads
     for (int i = 0; i < NBTHREADS; i++) {
