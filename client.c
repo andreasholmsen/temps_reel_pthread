@@ -19,23 +19,62 @@
 #include <time.h>
 #include <assert.h>
 #include <errno.h>
+#include <semaphore.h>
 
 #define SOCKET_PORT 10020
 #define SOCKET_SERVER "127.0.0.1" /* local host */
 
-// Thread parameters
+int fd; 
 
+// Thread parameters
 #define NBTHREADS 1
 pthread_t tid[NBTHREADS];
 struct sched_param sched_params[NBTHREADS];
-int sched_pri_vals[NBTHREADS] = {10}; // Read distance priority 10
+int sched_pri_vals[NBTHREADS] = {10}; // Read battery priority 10
 
 
-int fd; 
+pthread_mutex_t fd_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t motor_mutex = PTHREAD_MUTEX_INITIALIZER;
+sem_t battery_low;
 
-void read_battery() {
-	send(fd,"B\n",strlen("B, 10\n"),0);
+void * read_battery(void * args) {
+  char buffer[256];
+  int n;
+  while(1) {
+    pthread_mutex_lock(&fd_mutex);
+    send(fd,"B\n",strlen("B\n"),0);
+    n = recv(fd,buffer,256,0);
+    pthread_mutex_unlock(&fd_mutex);
+    printf("Battery level: %s\n", buffer);
+    if (atoi(buffer) < 10) { // If less than 10% battery
+      sem_post(&battery_low); //trigger semaphore
+      printf("BATTERY LOW\n");
+    }
 
+    memset(buffer, 0, sizeof(buffer));
+    sleep(2);
+  }
+  
+}
+
+void * recharge(void * args) {
+    while (1) {
+    sem_wait(&battery_low);
+    printf("RECHARGING\n");
+    pthread_mutex_lock(&motor_mutex);
+    send(fd,"M,0,0\n",strlen("M,0,0\n"),0);
+    // TODO: BATTERY RECHARGE
+    pthread_mutex_unlock(&motor_mutex);
+  }
+}
+
+void * move_forward(void * args) {
+  while(1) {
+    pthread_mutex_lock(&motor_mutex);
+    send(fd,"M,50,50\n",strlen("M,50,50\n"),0);
+    pthread_mutex_unlock(&motor_mutex);
+    usleep(1e5); // 100ms
+  }
 }
 
 void turn_ninety_deg() {
@@ -63,8 +102,7 @@ void read_distance(void * args) {
   }
 
   fflush(stdout);
-}
-  
+} 
 
 
 int main(int argc, char *argv[]) {
@@ -105,7 +143,8 @@ int main(int argc, char *argv[]) {
   fflush(stdout);
 
       // Start here
-      pthread_create(&tid[0], NULL, read_distance, NULL); // Read_distance() thread
+      sem_init(&battery_low, 0, 0); // Init semaphore
+      pthread_create(&tid[0], NULL, read_battery, NULL); // read_battery thread
 	
     // Set schedule priorities
       for (int i = 0; i < NBTHREADS; i++) {
@@ -125,10 +164,10 @@ int main(int argc, char *argv[]) {
       send(fd,"M,100,100\n",strlen("M,100,100\n"),0);
     
       while(1) {
-        read_distance();
+        read_distance((void *) NULL);
       }
 
-   
+
        // Start threads necessary
        
    
