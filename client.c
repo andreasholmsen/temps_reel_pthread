@@ -25,12 +25,45 @@
 
 int fd; 
 
+void read_battery() {
+	send(fd,"B\n",strlen("B, 10\n"),0);
+
+}
+
+void turn_ninety_deg() {
+  char buffer[256];
+  send(fd,"T,1.57\n",strlen("T,1.57\n"),0);
+  int n = recv(fd,buffer,256,0);
+}
+
+void read_distance() {
+  double left_sensor, right_sensor;
+  char buffer[256];
+  send(fd,"S\n",strlen("S\n"),0);
+  int n = recv(fd,buffer,256,0);
+  buffer[n] = '\0';
+  printf("%s\n",buffer);
+  printf("test1");
+  
+  sscanf(buffer,"S,%lf,%lf",&left_sensor,&right_sensor);
+  printf("test2");
+  printf("test %lf %lf", left_sensor, right_sensor);
+  fflush(stdout);
+ }
+  
+  // Compare distance to a threshold
+  // if (left_sensor > 0 && right_sensor > 0)
+
+
+
+
+
 
 int main(int argc, char *argv[]) {
   struct sockaddr_in address;
   const struct hostent *server;
   int rc;
-  char buffer[256];
+  //char buffer[256];
 
   /* create the socket */
   fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -63,13 +96,24 @@ int main(int argc, char *argv[]) {
 
   fflush(stdout);
 
-  send(fd,"M,99,99\n",strlen("M,99,99\n"),0);
+      // Start here
 
-  for (;;) {
-    int n = recv(fd, buffer, 256, 0);
-    buffer[n] = '\0';
-    printf("Received: %s", buffer);
-  }
+      // Set motor to 50%
+      send(fd,"M,50,50\n",strlen("M,50,50\n"),0);
+      turn_ninety_deg();
+      send(fd,"M,100,100\n",strlen("M,100,100\n"),0);
+    
+      while(1) {
+        read_distance();
+      }
+
+   
+       // Start threads necessary
+       
+   
+  
+  while(1);
+  
 
   close(fd);
 
