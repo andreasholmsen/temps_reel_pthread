@@ -15,13 +15,21 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-
+#include <pthread.h>
 #include <time.h>
 #include <assert.h>
 #include <errno.h>
 
 #define SOCKET_PORT 10020
 #define SOCKET_SERVER "127.0.0.1" /* local host */
+
+// Thread parameters
+
+#define NBTHREADS 1
+pthread_t tid[NBTHREADS];
+struct sched_param sched_params[NBTHREADS];
+int sched_pri_vals[NBTHREADS] = {10}; // Read distance priority 10
+
 
 int fd; 
 
@@ -36,7 +44,7 @@ void turn_ninety_deg() {
   int n = recv(fd,buffer,256,0);
 }
 
-void read_distance() {
+void read_distance(void * args) {
   double left_sensor, right_sensor;
   char buffer[256];
   send(fd,"S\n",strlen("S\n"),0);
@@ -97,6 +105,19 @@ int main(int argc, char *argv[]) {
   fflush(stdout);
 
       // Start here
+      pthread_create(&tid[0], NULL, read_distance, NULL); // Read_distance() thread
+	
+    // Set schedule priorities
+      for (int i = 0; i < NBTHREADS; i++) {
+          sched_params[i].sched_priority = sched_pri_vals[i];
+          pthread_setschedparam(tid[i], SCHED_RR, &sched_params[i]);
+      }
+    
+	
+	 // Wait for thread completion
+    for (int i = 0; i < NBTHREADS; i++) {
+        pthread_join(tid[i], NULL);
+    }
 
       // Set motor to 50%
       send(fd,"M,50,50\n",strlen("M,50,50\n"),0);
