@@ -48,15 +48,15 @@ void read_distance() {
   sscanf(buffer,"S,%lf,%lf",&left_sensor,&right_sensor);
   printf("test2");
   printf("test %lf %lf", left_sensor, right_sensor);
+
+  // Turn before crashing into an object
+  if (left_sensor > 600 || right_sensor > 600) {
+    turn_ninety_deg();
+  }
+
   fflush(stdout);
- }
+}
   
-  // Compare distance to a threshold
-  // if (left_sensor > 0 && right_sensor > 0)
-
-
-
-
 
 
 int main(int argc, char *argv[]) {
