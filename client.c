@@ -81,7 +81,7 @@ void * move_forward(void * args) {
 }
 
 // Triggered by semaphore changing value ?
-void turn_ninety_deg(sem_t * sem) {
+void * turn_ninety_deg(sem_t * sem) {
   while(1) {
     // Signal that it wants to take the semaphore
     sem_wait(sem);
@@ -93,7 +93,7 @@ void turn_ninety_deg(sem_t * sem) {
   }
 }
 
-void read_distance(sem_t * sem) {
+void * read_distance(sem_t * sem) {
   while(1) {
   // Signal that it wants to take the semaphore 
   sem_wait(sem);
