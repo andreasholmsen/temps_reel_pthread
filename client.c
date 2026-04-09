@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <semaphore.h>
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -25,18 +26,27 @@
 
 int fd; 
 
+sem_t sem;
+
 void read_battery() {
 	send(fd,"B\n",strlen("B, 10\n"),0);
 
 }
 
-void turn_ninety_deg() {
+// Triggered by semaphore changing value ?
+void turn_ninety_deg(sem_t * sem) {
+  // Signal that it wants to take the semaphore
+  sem_wait(sem);
   char buffer[256];
   send(fd,"T,1.57\n",strlen("T,1.57\n"),0);
   int n = recv(fd,buffer,256,0);
+  // Increments
+  sem_post(sem);
 }
 
-void read_distance() {
+void read_distance(sem_t * sem) {
+  // Signal that it wants to take the semaphore 
+  sem_wait(sem);
   double left_sensor, right_sensor;
   char buffer[256];
   send(fd,"S\n",strlen("S\n"),0);
@@ -51,7 +61,8 @@ void read_distance() {
 
   // Turn before crashing into an object
   if (left_sensor > 600 || right_sensor > 600) {
-    turn_ninety_deg();
+    // Increments
+    sem_post(sem);
   }
 
   fflush(stdout);
@@ -98,6 +109,9 @@ int main(int argc, char *argv[]) {
 
       // Start here
 
+      // Initialize semaphore
+      sem_init(&sem,0,1); // 0 = semaphore shared between the threads of a process
+
       // Set motor to 50%
       send(fd,"M,50,50\n",strlen("M,50,50\n"),0);
       turn_ninety_deg();
@@ -105,6 +119,7 @@ int main(int argc, char *argv[]) {
     
       while(1) {
         read_distance();
+        turn_ninety_deg();
       }
 
    
