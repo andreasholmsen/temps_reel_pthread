@@ -20,25 +20,62 @@
 #include <time.h>
 #include <assert.h>
 #include <errno.h>
+#include <semaphore.h>
 
 #define SOCKET_PORT 10020
 #define SOCKET_SERVER "127.0.0.1" /* local host */
 
-// Thread parameters
+int fd; 
 
+// Thread parameters
 #define NBTHREADS 1
 pthread_t tid[NBTHREADS];
 struct sched_param sched_params[NBTHREADS];
-int sched_pri_vals[NBTHREADS] = {10}; // Read distance priority 10
+int sched_pri_vals[NBTHREADS] = {10}; // Read battery priority 10
 
 
-int fd; 
+pthread_mutex_t fd_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t motor_mutex = PTHREAD_MUTEX_INITIALIZER;
+sem_t battery_low;
 
-sem_t sem;
+void * read_battery(void * args) {
+  char buffer[256];
+  int n;
+  while(1) {
+    pthread_mutex_lock(&fd_mutex);
+    send(fd,"B\n",strlen("B\n"),0);
+    n = recv(fd,buffer,256,0);
+    pthread_mutex_unlock(&fd_mutex);
+    printf("Battery level: %s\n", buffer);
+    if (atoi(buffer) < 10) { // If less than 10% battery
+      sem_post(&battery_low); //trigger semaphore
+      printf("BATTERY LOW\n");
+    }
 
-void read_battery() {
-	send(fd,"B\n",strlen("B, 10\n"),0);
+    memset(buffer, 0, sizeof(buffer));
+    sleep(2);
+  }
+  
+}
 
+void * recharge(void * args) {
+    while (1) {
+    sem_wait(&battery_low);
+    printf("RECHARGING\n");
+    pthread_mutex_lock(&motor_mutex);
+    send(fd,"M,0,0\n",strlen("M,0,0\n"),0);
+    // TODO: BATTERY RECHARGE
+    pthread_mutex_unlock(&motor_mutex);
+  }
+}
+
+void * move_forward(void * args) {
+  while(1) {
+    pthread_mutex_lock(&motor_mutex);
+    send(fd,"M,50,50\n",strlen("M,50,50\n"),0);
+    pthread_mutex_unlock(&motor_mutex);
+    usleep(1e5); // 100ms
+  }
 }
 
 // Triggered by semaphore changing value ?
@@ -74,8 +111,7 @@ void read_distance(sem_t * sem) {
   }
 
   fflush(stdout);
-}
-  
+} 
 
 
 int main(int argc, char *argv[]) {
@@ -119,6 +155,20 @@ int main(int argc, char *argv[]) {
 
       // Initialize semaphore
       sem_init(&sem,0,1); // 0 = semaphore shared between the threads of a process
+      sem_init(&battery_low, 0, 0); // Init semaphore
+      pthread_create(&tid[0], NULL, read_battery, NULL); // read_battery thread
+	
+    // Set schedule priorities
+      for (int i = 0; i < NBTHREADS; i++) {
+          sched_params[i].sched_priority = sched_pri_vals[i];
+          pthread_setschedparam(tid[i], SCHED_RR, &sched_params[i]);
+      }
+    
+	
+	 // Wait for thread completion
+    for (int i = 0; i < NBTHREADS; i++) {
+        pthread_join(tid[i], NULL);
+    }
 
       // Set motor to 50%
       send(fd,"M,50,50\n",strlen("M,50,50\n"),0);
@@ -128,9 +178,10 @@ int main(int argc, char *argv[]) {
       while(1) {
         read_distance();
         turn_ninety_deg();
+        read_distance((void *) NULL);
       }
 
-   
+
        // Start threads necessary
        
    
