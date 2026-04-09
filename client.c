@@ -82,16 +82,19 @@ void * move_forward(void * args) {
 
 // Triggered by semaphore changing value ?
 void turn_ninety_deg(sem_t * sem) {
-  // Signal that it wants to take the semaphore
-  sem_wait(sem);
-  char buffer[256];
-  send(fd,"T,1.57\n",strlen("T,1.57\n"),0);
-  int n = recv(fd,buffer,256,0);
-  // Increments
-  sem_post(sem);
+  while(1) {
+    // Signal that it wants to take the semaphore
+    sem_wait(sem);
+    char buffer[256];
+    send(fd,"T,1.57\n",strlen("T,1.57\n"),0);
+    int n = recv(fd,buffer,256,0);
+    // Increments
+    sem_post(sem);
+  }
 }
 
 void read_distance(sem_t * sem) {
+  while(1) {
   // Signal that it wants to take the semaphore 
   sem_wait(sem);
   double left_sensor, right_sensor;
@@ -113,6 +116,7 @@ void read_distance(sem_t * sem) {
   }
 
   fflush(stdout);
+  }
 } 
 
 
@@ -178,6 +182,7 @@ int main(int argc, char *argv[]) {
         read_distance((void *) NULL);
       }
 
+    
 
        // Start threads necessary
 
