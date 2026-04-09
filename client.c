@@ -16,6 +16,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <time.h>
 #include <assert.h>
@@ -37,6 +38,7 @@ int sched_pri_vals[NBTHREADS] = {10}; // Read battery priority 10
 pthread_mutex_t fd_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t motor_mutex = PTHREAD_MUTEX_INITIALIZER;
 sem_t battery_low;
+sem_t sem;
 
 void * read_battery(void * args) {
   char buffer[256];
@@ -169,11 +171,6 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < NBTHREADS; i++) {
         pthread_join(tid[i], NULL);
     }
-
-      // Set motor to 50%
-      send(fd,"M,50,50\n",strlen("M,50,50\n"),0);
-      turn_ninety_deg();
-      send(fd,"M,100,100\n",strlen("M,100,100\n"),0);
     
       while(1) {
         read_distance();
@@ -183,11 +180,6 @@ int main(int argc, char *argv[]) {
 
 
        // Start threads necessary
-       
-   
-  
-  while(1);
-  
 
   close(fd);
 
